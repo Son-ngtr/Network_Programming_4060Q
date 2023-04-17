@@ -2,112 +2,102 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <unistd.h>
-#include <time.h>
 
 #define MAX_LENGTH 1024
-#define MAX_CLIENT 10
 
 int main(int argc, char *argv[])
 {
-
     // Kiểm tra đầu vào
     if (argc != 3)
     {
-        printf("Usage: %s <port> <log-file>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    // Tạo socket
-    int server = socket(AF_INET, SOCK_STREAM, 0);
-    if (server == -1)
-    {
-        perror("socket() failed");
-        exit(EXIT_FAILURE);
+        printf("Usage: %s <server-IP-address> <port>\n", argv[0]);
+        return 1;
     }
 
     // Thiết lập thông tin địa chỉ cho socket
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(atoi(argv[1]));
+    server_addr.sin_addr.s_addr = inet_addr(argv[1]);
+    server_addr.sin_port = htons(atoi(argv[2]));
 
-    // Gán địa chỉ cho socket
-    if (bind(server, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    // Tạo socket
+    int client = socket(AF_INET, SOCK_STREAM, 0);
+    if (client == -1)
     {
-        perror("bind() failed");
-        exit(EXIT_FAILURE);
+        perror("socket() failed");
+        return 1;
     }
 
-    // Lắng nghe kết nối
-    if (listen(server, MAX_CLIENT) == -1)
+    // Kết nối đến server
+    if (connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
-        perror("listen() failed");
-        exit(EXIT_FAILURE);
+        perror("connect() failed");
+        return 1;
     }
+    printf("Connection to %s %s port [tcp/*] succeeded!\n", argv[1], argv[2]);
 
-    // Nhận dữ liệu từ client
-    char buf[MAX_LENGTH];
-    memset(buf, 0, MAX_LENGTH);
     while (1)
     {
-        printf("Waiting for client on %s %s\n", inet_ntoa(server_addr.sin_addr), argv[1]);
+        // Nhập thông tin sinh viên từ bàn phím
+        char mssv[MAX_LENGTH], hoten[MAX_LENGTH], ngaysinh[MAX_LENGTH], diem[MAX_LENGTH];
+        memset(mssv, 0, MAX_LENGTH);
+        memset(hoten, 0, MAX_LENGTH);
+        memset(ngaysinh, 0, MAX_LENGTH);
+        memset(diem, 0, MAX_LENGTH);
 
-        // Chấp nhận kết nối từ client
-        struct sockaddr_in client_addr;
-        memset(&client_addr, 0, sizeof(client_addr));
-        socklen_t client_addr_len = sizeof(client_addr);
-        int client = accept(server,
-                            (struct sockaddr *)&client_addr,
-                            &client_addr_len);
-        if (client == -1)
+        printf("Enter student information:\n");
+        printf("\t- MSSV: ");
+        fgets(mssv, MAX_LENGTH, stdin);
+        mssv[strcspn(mssv, "\n")] = 0;
+
+        printf("\t- Họ tên: ");
+        fgets(hoten, MAX_LENGTH, stdin);
+        hoten[strcspn(hoten, "\n")] = 0;
+
+        printf("\t- Ngày sinh: ");
+        fgets(ngaysinh, MAX_LENGTH, stdin);
+        ngaysinh[strcspn(ngaysinh, "\n")] = 0;
+
+        printf("\t- Điểm trung bình: ");
+        fgets(diem, MAX_LENGTH, stdin);
+        diem[strcspn(diem, "\n")] = 0;
+
+        // Đóng gói thông tin sinh viên vào buffer để gửi đến server
+        char buffer[4 * MAX_LENGTH + 1];
+        memset(buffer, 0, 4 * MAX_LENGTH + 1);
+        sprintf(buffer, "%s %s %s %s", mssv, hoten, ngaysinh, diem);
+
+        // Gửi buffer chứa thông tin sinh viên đến server
+        int bytes_sent = send(client, buffer, strlen(buffer), 0);
+        if (bytes_sent == -1)
         {
-            perror("accept() failed");
-            exit(EXIT_FAILURE);
+            perror("send() failed");
+            return 1;
         }
-        printf("Accepted socket %d from IP: %s:%d\n",
-               client,
-               inet_ntoa(client_addr.sin_addr),
-               ntohs(client_addr.sin_port));
+        printf("Data sent successfully\n\n");
 
-        while (1)
+        // Hỏi người dùng có muốn nhập tiếp không
+        printf("Do you want to continue? (y/n): ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = 0;
+        if (strcmp(buffer, "n") == 0)
         {
-            // Nhận dữ liệu từ client
-            int bytes_received = recv(client, buf, MAX_LENGTH, 0);
-            buf[bytes_received] = '\0';
-            if (bytes_received == -1)
+            if (send(client, "exit\n", 5, 0) == -1)
             {
-                perror("recv() failed");
-                exit(EXIT_FAILURE);
+                perror("send() failed");
+                return 1;
             }
-            else if (bytes_received == 0 || strcmp(buf, "exit\n") == 0)
-            {
-                printf("Client from %s:%d disconnected\n\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-                break;
-            }
-
-            // Lấy thời gian hiện tại
-            time_t current_time = time(NULL);
-            char *formatted_time = ctime(&current_time);
-            formatted_time[strlen(formatted_time) - 1] = '\0';
-
-            // Ghi vào file log
-            FILE *log_file = fopen(argv[2], "a");
-            if (log_file == NULL)
-            {
-                perror("fopen() failed");
-                exit(EXIT_FAILURE);
-            }
-            printf("%s %s %s\n", inet_ntoa(client_addr.sin_addr), formatted_time, buf);
-            fprintf(log_file, "%s %s %s\n", inet_ntoa(client_addr.sin_addr), formatted_time, buf);
-            fclose(log_file);
+            break;
         }
-
-        // Đóng kết nối
-        close(client);
     }
+
+    // Đóng kết nối socket
+    close(client);
+
     return 0;
 }
