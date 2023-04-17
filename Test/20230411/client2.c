@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    ret = connect(client, result -> ai_addr, result -> ai_addrlen);
+    ret = connect(client, result->ai_addr, result->ai_addrlen);
     if (ret == -1)
     {
         perror("connect() failed");
