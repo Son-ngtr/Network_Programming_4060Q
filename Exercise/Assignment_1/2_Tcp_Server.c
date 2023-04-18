@@ -11,7 +11,7 @@
 
 int main(int argc, char *argv[])
 {
-    // Kiểm tra đầu vào
+    // Check đầu vào
     if (argc != 4)
     {
         printf("Usage: %s <Port> <The-file-contains-the-greeting> <The-file-that-stores-the-content-the-client-sends-to>\n", argv[0]);
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // Thiết lập thông tin địa chỉ cho socket
+    // Thông tin địa chỉ Socket
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // Lắng nghe kết nối từ client
+    // Nghe kết nối từ Client
     if (listen(server, MAX_CLIENT) == -1)
     {
         perror("listen() failed");
@@ -50,25 +50,19 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        printf("Waiting for client on %s %s\n",
-               inet_ntoa(server_addr.sin_addr), argv[1]);
+        printf("Waiting for client on %s %s\n", inet_ntoa(server_addr.sin_addr), argv[1]);
 
         // Chấp nhận kết nối từ client
         struct sockaddr_in client_addr;
         memset(&client_addr, 0, sizeof(client_addr));
         socklen_t client_addr_len = sizeof(client_addr);
-        int client = accept(server,
-                            (struct sockaddr *)&client_addr,
-                            &client_addr_len);
+        int client = accept(server, (struct sockaddr *)&client_addr, &client_addr_len);
         if (client == -1)
         {
             perror("accept() failed");
             exit(EXIT_FAILURE);
         }
-        printf("Accepted socket %d from IP: %s:%d\n",
-               client,
-               inet_ntoa(client_addr.sin_addr),
-               ntohs(client_addr.sin_port));
+        printf("Accepted socket %d from IP: %s:%d\n", client, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
         // Đọc nội dung tệp tin chứa câu chào
         FILE *fp = fopen(argv[2], "r");
@@ -80,6 +74,7 @@ int main(int argc, char *argv[])
         fseek(fp, 0, SEEK_END);
         long fsize = ftell(fp);
         rewind(fp);
+
         char *greeting = (char *)malloc(fsize + 1);
         if (greeting == NULL)
         {
@@ -89,7 +84,7 @@ int main(int argc, char *argv[])
         memset(greeting, 0, fsize + 1);
         fread(greeting, fsize, 1, fp);
         fclose(fp);
-
+        
         // Gửi câu chào đến client
         if (send(client, greeting, strlen(greeting), 0) == -1)
         {
