@@ -9,15 +9,23 @@
 
 #define MAX_LENGTH 1024
 
-int main()
+int main(int argc, char *argv[])
 {
+    // Kiểm tra đầu vào
+    if (argc != 3)
+    {
+        printf("Usage: %s <server-IP-address> <port>\n", argv[0]);
+        return 1;
+    }
 
+    // Thiết lập thông tin địa chỉ cho socket
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server_addr.sin_port = htons(9000);
+    server_addr.sin_addr.s_addr = inet_addr(argv[1]);
+    server_addr.sin_port = htons(atoi(argv[2]));
 
+    // Tạo socket
     int client = socket(AF_INET, SOCK_STREAM, 0);
     if (client == -1)
     {
@@ -25,55 +33,75 @@ int main()
         return 1;
     }
 
-    // if (connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
-    // {
-    //     perror("connect() failed");
-    //     return 1;
-    // }
-
-    // Nhan DL va tao BUFFER
-    char name[64];
-    int diskNo;
-    char buf[1024];
-    int pos = 0;
-
-    
-    printf("Enter Computer Name: ");
-    fgets(name, sizeof(name), stdin);
-    name[strlen(name) - 1] = 0;
-
-    strcpy(buf, name);
-    pos += strlen(name);
-    buf[pos] = 0;
-    pos++;
-
-    printf("Enter Number of Disks: ");
-    scanf("%d", &diskNo);
-    getchar();
-
-    char drive_letter;
-    unsigned short drive_size;  
-
-    for(int i=0; i<diskNo; i++){
-        printf("Ky tu o Dia %d: ", i+1);
-        scanf("%c /n", &drive_letter);
-        buf[pos] = drive_letter;
-        pos++;
-
-        printf("Kich thuoc: ");
-        scanf("%hd", &drive_size);
-        getchar();
-        memcpy(buf, &drive_size, sizeof(drive_size));
-        pos += sizeof(drive_size);
-
+    // Kết nối đến server
+    if (connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    {
+        perror("connect() failed");
+        return 1;
     }
+    printf("Connection to %s %s port [tcp/*] succeeded!\n", argv[1], argv[2]);
 
-    printf("Bufffer size: %d /n", pos);
+    while (1)
+    {
+        // Nhập tên máy tính
+        char nameComputer[MAX_LENGTH];
+        memset(nameComputer, 0, MAX_LENGTH);
+        printf("Enter name computer: ");
+        fgets(nameComputer, MAX_LENGTH, stdin);
+        nameComputer[strcspn(nameComputer, "\n")] = 0;
 
-    send(client, buf, strlen(buf), 0);
+        // Nhập số lượng ổ đĩa
+        unsigned short numberDisk = 0;
+        printf("Enter number disk: ");
+        scanf("%hu", &numberDisk);
+        getchar();
 
-    // Đóng kết nối socket
+        // Nhập tên từng ổ đĩa và dung lượng đi kèm
+        char nameDisk[MAX_LENGTH][MAX_LENGTH];
+        unsigned short sizeDisk[MAX_LENGTH];
+        for (int i = 0; i < numberDisk; i++)
+        {
+            memset(nameDisk[i], 0, MAX_LENGTH);
+            printf("\t- Enter name disk %d: ", i + 1);
+            fgets(nameDisk[i], MAX_LENGTH, stdin);
+            nameDisk[i][strcspn(nameDisk[i], "\n")] = 0;
+
+            printf("\t- Enter size disk %d: ", i + 1);
+            scanf("%hu", &sizeDisk[i]);
+            getchar();
+        }
+
+        // Đóng gói thông tin
+        char buffer[MAX_LENGTH];
+        memset(buffer, 0, MAX_LENGTH);
+        sprintf(buffer, "%s;%hu", nameComputer, numberDisk);
+        for (int i = 0; i < numberDisk; i++)
+        {
+            sprintf(buffer, "%s;%s;%hu", buffer, nameDisk[i], sizeDisk[i]);
+        }
+
+        // Gửi thông tin đến server
+        if (send(client, buffer, strlen(buffer), 0) == -1)
+        {
+            perror("send() failed");
+            return 1;
+        }
+
+        // Hỏi người dùng có muốn nhập tiếp không
+        memset(buffer, 0, MAX_LENGTH);
+        printf("Do you want to continue? (y/n): ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = 0;
+        if (strcmp(buffer, "n") == 0)
+        {
+            if (send(client, "exit\n", 5, 0) == -1)
+            {
+                perror("send() failed");
+                return 1;
+            }
+            break;
+        }
+    }
     close(client);
-
     return 0;
 }
