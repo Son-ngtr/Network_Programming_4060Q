@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Thiết lập thông tin địa chỉ cho socket
+    // Thông tin địa chỉ cho socket
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;

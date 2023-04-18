@@ -60,18 +60,13 @@ int main(int argc, char *argv[])
         struct sockaddr_in client_addr;
         memset(&client_addr, 0, sizeof(client_addr));
         socklen_t client_addr_len = sizeof(client_addr);
-        int client = accept(server,
-                            (struct sockaddr *)&client_addr,
-                            &client_addr_len);
+        int client = accept(server, (struct sockaddr *)&client_addr, &client_addr_len);
         if (client == -1)
         {
             perror("accept() failed");
             exit(EXIT_FAILURE);
         }
-        printf("Accepted socket %d from IP: %s:%d\n",
-               client,
-               inet_ntoa(client_addr.sin_addr),
-               ntohs(client_addr.sin_port));
+        printf("Accepted socket %d from IP: %s:%d\n", client, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
         while (1)
         {
@@ -109,5 +104,6 @@ int main(int argc, char *argv[])
         // Đóng kết nối
         close(client);
     }
+    close(server);
     return 0;
 }
