@@ -44,22 +44,6 @@ int main()
     int ret = recv(client, buf, sizeof(buf), 0);
     buf[ret] = 0;
 
-    printf("%d bytes received \n", ret);
-
-    int pos = 0;
-    char name[64];
-    strcpy(name, buf);
-    pos = strlen(name) + 1;
-
-    int no_dr = (ret - pos) / 3;
-    for(int i=0; i<no_dr; i++){
-        char dr_letter = buf[pos];
-        pos++;
-        unsigned short dr_size;
-        memcpy(&dr_size, buf)
-    }
-
-
     
     close(client);
     close(listener);
