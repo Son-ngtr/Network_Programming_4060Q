@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Đóng socket
+    //Đóng socket
     close(server);
 
     return 0;
