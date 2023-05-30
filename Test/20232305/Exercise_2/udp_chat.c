@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 
     while (1) {
         // Sử dụng hàm poll để theo dõi các sự kiện trên các socket
-        int ready = poll(fds, 2, TIMEOUT * 1000);
+        int ready = poll(fds, 2, 0);
 
         if (ready == -1) {
             perror("Error in poll");
