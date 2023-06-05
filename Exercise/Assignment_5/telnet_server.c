@@ -48,7 +48,7 @@ int authenticate_user(char *username, char *password)
         char stored_password[MAX_PASSWORD_LEN];
         sscanf(buf, "%s %s", stored_username, stored_password);
 
-        // So sánh username và password
+        //So sánh username và password
         if (strcmp(username, stored_username) == 0 && strcmp(password, stored_password) == 0)
         {
             // Đóng file
