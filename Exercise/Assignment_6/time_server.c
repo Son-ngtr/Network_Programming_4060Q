@@ -26,14 +26,12 @@ void *client_proc(void *);
 
 int main(int argc, char *argv[])
 {
-    // Kiểm tra đầu vào
     if (argc != 2)
     {
         printf("Usage: %s <port>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    // Khởi tạo socket TCP
     int server = socket(AF_INET, SOCK_STREAM, 0);
     if (server < 0)
     {
@@ -41,7 +39,6 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // Thiết lập địa chỉ server
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET; // IPv4
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);

@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 int authenticate_user(char *username, char *password)
 {
     // Mở file database.txt
-    FILE *fp = fopen("database.txt", "r");
+    FILE *fp = fopen("dtb.txt", "r");
     if (fp == NULL)
     {
         perror("fopen() failed");
