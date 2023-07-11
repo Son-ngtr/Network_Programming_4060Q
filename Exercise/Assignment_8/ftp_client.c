@@ -16,7 +16,7 @@ int main()
 
     struct sockaddr_in ctrl_addr;
     ctrl_addr.sin_family = AF_INET;
-    ctrl_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ctrl_addr.sin_addr.s_addr = inet_addr("172.29.160.1");
     ctrl_addr.sin_port = htons(21);
 
     if (connect(ctrl_socket, (struct sockaddr *)&ctrl_addr, sizeof(ctrl_addr)))
@@ -186,7 +186,7 @@ int main()
 
         struct sockaddr_in data_addr;
         data_addr.sin_family = AF_INET;
-        data_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        data_addr.sin_addr.s_addr = inet_addr("172.29.160.1");
         data_addr.sin_port = htons(p1);
 
         int data_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
